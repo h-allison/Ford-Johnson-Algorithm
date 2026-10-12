@@ -8,25 +8,60 @@ The algorithm is designed to minimize the number of *comparisons* required to so
 
 [Here an illustration?]
 
-# The steps of *merge insertion* for $n$$ elements
+# The steps of *merge insertion* for $n$ elements
 
-## 1) Create pairs & sort each pair.
+## Step 1 (merge)
 > i) Make pairwise comparisons of $\lfloor n/2 \rfloor$ disjoint pairs of elements. (If $n$ is odd, leave one element out.)
 
-This is the step that resembles merge sort.
-- Create n/2 pairs
-- Fill each pair with 2 elements
-- If n % 2 != 0, do not include the leftover element in the pairs. Save it aside.
-- Sort each pair internally.
+This step is easy. Out of $n$ elements, create $n/2$ pairs. If one element is leftover, save it to the side.
 
-## 2) Perform *merge insertion* on the larger element of each pair
+![Step 1, Part 1](/images/step_1_part_1.gif)
+
+Sort each pair internally. This will require 1 comparison per pair. *Is pair[0] > pair[1]?* Keep track of the total number of comparisons you perform, from beginning to end of the algorithm.
+
+![Step 1, Part 2](/images/step_1_part_2.gif)
+
+## Step 2 (recurse)
 > ii) Sort the $\lfloor n/2 \rfloor$ larger numbers, found in step (i), by merge insertion.
 
-Step 2 of merge insertion is... merge insertion! This means we go back to the top and perform the same algorithm in its entirety (Steps 1-3) on the larger elements of each set.
+Step 2 of merge insertion is... merge insertion. Perform the same algorithm in its entirety (Steps 1-3) on the larger elements found in Step 1.
 
-Many summaries of merge-insertion tend to skip or gloss over this recursion. Many students misread this step as requiring regular merge sort, and/or may misunderstand the recursion as calling only step 2 or steps 1-2 repeatedly. I made these mistakes too, at first.
+![Step 2 cycling through Step 1](images/step_2_fast.gif)
 
-When the recursion unwinds, in Step 3, the pairs that you've been creating and sorting will be unwrapped again. For this reason, it's essential to keep track of each element's pair throughout all steps. Students have devised various ways of tracking the pairs, and for me, using pointers made the most sense.
+
+The program will "wind up" by cycling through Steps 1-2 repeatedly (as seen in the dizzying animation above), and when the base case is reached (there is only one element), it will "unwind" back through as many rounds of Step 3.
+
+When the recursion eventually unwinds, the pairs that we've been creating and sorting will be unwrapped again. For this reason, it's essential to keep track of each element's pair, throughout the recursion. In the illustration, I'm using paperclips to keep track of pairs. In the code, it's pointers.
+
+```
+typedef struct s_num_ptr {
+  unsigned int num;
+  const t_pair *ptr;
+} t_num_ptr;
+```
+
+---
+
+### Winding Up, in Slow Motion:
+Here is a slower breakdown of what's happening in the animated example. We ended Step 1 with a group of pairs, and each pair's elements ordered.
+
+Step 2 is to the take larger element of each pair as our new input, and begin the alorithm again at Step 1. I'm paperclipping each larger number on top of its pair.
+
+![Taking the Larger Numbers Only](images/step_2_take_larger.gif)
+
+Back to Step 1. Out of $n$ elements, create $n/2$ pairs. If one element is leftover, save it to the side.
+
+![Make pairs again](images/step_2_make_pairs.jpg)
+
+Again, sort each pair internally. *Is pair[0] > pair[1]?* We add these comparisons to our running total of comparisons performed.
+
+In the illustrated example, it just so happened that {8, 11} and {5, 7} were already ordered, so no swapping was required.
+
+Now we arrive at Step 2 again. Again we take the larger numbers, make pairs, order pairs, and repeat...
+
+
+
+
 
 ## 3) Split elements into 2 chains. Perform insertion according to sequence formula.
 
@@ -62,14 +97,21 @@ My explanations will draw from additional text on the same page, as well as the 
 >
 >$`\quad b_3, b_2;\; b_5, b_4;\; b_{11}, b_{10}, \ldots, b_6;\; \ldots;\; b_{t_k}, b_{t_k - 1}, \ldots, b_{t_{k-1}+1};\; \ldots \qquad`$
 
-- Now we will insert $b$'s into the main chain according to a particular formula that uses a special sequence of numbers. The these tiny subscripted values are getting hard to read... and there's further explanation about them in the text, so let's zoom out here.
+Now we will insert $b$'s into the main chain according to a particular formula that uses a special sequence of numbers. The these tiny subscripted values are getting hard to read... and there's further explanation about them in the text, so let's zoom out here.
 
 ![Jacobsthal_explanation](/images/knuth_text_jacobsthal_explanation.png)
 
-
+- Determine the next element of $b$ to be inserted into the main chain.
+- The next element is determined according to this sequence, which will not mean anything to you at first glance:
 
 ![a close-up of this last line](images/knuth_text_jacobsthal.png)
 
+What is $t$ here, and what is $k$? In the next paragraph, Knuth defines $t$ as the Jacobsthal Numbers (1, 3, 5, 11...), and $k$ is the index of $t$. (Note that in this math world, the very first index is 1, not 0).
+
+The first number of the Jacobsthal Numbers is $1$.
+Therefore: $t_1 = 1$, $b_{t_1} = b_1$, and $b_1 = $ the first element of b. We've already inserted $b_1$ when we created the main chain. After $1$, the next number in the Jacobsthal sequence is $3$. So in this case...
+- $t_2 = 1$
+- $t_{k-1}$ = $t_
 
 
 ## What's Involved in Merge-Insertion (a preview)
