@@ -1,4 +1,4 @@
-# The Ford-Johnson-Algorithm
+# The Ford-Johnson-Algorithm (aka merge insertion)
 
 The Ford-Johnson algorithm, aka merge insertion sort, is a sorting algorithm described by Donald Knuth in Volume 3 of [The Art of Computer Programming](https://en.wikipedia.org/wiki/The_Art_of_Computer_Programming).
 
@@ -6,22 +6,36 @@ The Ford-Johnson algorithm, aka merge insertion sort, is a sorting algorithm des
 
 The algorithm is designed to minimize the number of *comparisons* required to sort a given group of elements, in the worst case. Among students in the C/C++ curriculum at 42, the Ford-Johnson / merge-insertion algorithm is infamous, as the subject of our final and most complex C++ exercise module.
 
-[Here an illustration?]
-
-# The steps of *merge insertion* for $n$ elements
+# The Steps of Merge Insertion for $n$ Elements
 
 ## Step 1 (merge)
-> i) Make pairwise comparisons of $\lfloor n/2 \rfloor$ disjoint pairs of elements. (If $n$ is odd, leave one element out.)
 
-This step is easy. Out of $n$ elements, create $n/2$ pairs. If one element is leftover, save it to the side.
+![Step 1](images/knuth_step_1_cutout.jpg)
+
+*"i) Make pairwise comparisons of $`{\lfloor n/2 \rfloor}`$ disjoint pairs of elements. (If $n$ is odd, leave one element out.)"*
+
+This step is easy. First, out of $n$ elements, we create *$`{\lfloor n/2 \rfloor}`$ disjoint pairs*. If one element is leftover, we save it to the side.
 
 ![Step 1, Part 1](/images/step_1_part_1.gif)
 
-Sort each pair internally. This will require 1 comparison per pair. *Is pair[0] > pair[1]?* Keep track of the total number of comparisons you perform, from beginning to end of the algorithm.
+> FYI: You might notice that $`{\lfloor this \rfloor}`$ is not a normal [ ] bracket
+>
+> ⌊n/2⌋ means floor, aka "n/2 rounded down." ⌈n/2⌉ means ceiling, aka "n/2" rounded up."
+> - {\lceil n/2 \rceil}$
+> 
+>
+<BR>
+
+
+
+*"Make pairwise comparisons of ${\lfloor n/2 \rfloor}$ disjoint pairs"*... In other words, sort each pair internally. This will require 1 comparison per pair. *Is pair[0] > pair[1]?* Keep track of the total number of comparisons you perform, from beginning to end of the algorithm.
 
 ![Step 1, Part 2](/images/step_1_part_2.gif)
 
 ## Step 2 (recurse)
+
+![Step 2](images/knuth_step_2_cutout.jpg)
+
 > ii) Sort the $\lfloor n/2 \rfloor$ larger numbers, found in step (i), by merge insertion.
 
 Step 2 of merge insertion is... merge insertion. Perform the same algorithm in its entirety (Steps 1-3) on the larger elements found in Step 1.
@@ -29,129 +43,54 @@ Step 2 of merge insertion is... merge insertion. Perform the same algorithm in i
 ![Step 2 cycling through Step 1](images/step_2_fast.gif)
 
 
-The program will "wind up" by cycling through Steps 1-2 repeatedly (as seen in the dizzying animation above), and when the base case is reached (there is only one element), it will "unwind" back through as many rounds of Step 3.
+The program will "wind up" by cycling through Steps 1-2 repeatedly (as seen in the animation above), and when the base case is reached (nothing is left to pair-and-order), it will "unwind" back through as many rounds of Step 3.
 
-When the recursion eventually unwinds, the pairs that we've been creating and sorting will be unwrapped again. For this reason, it's essential to keep track of each element's pair, throughout the recursion. In the illustration, I'm using paperclips to keep track of pairs. In the code, it's pointers.
+![A simplified diagram of the recursion](images/recursion.jpg)
 
-```
-typedef struct s_num_ptr {
-  unsigned int num;
-  const t_pair *ptr;
-} t_num_ptr;
-```
-
----
-
-### Winding Up, in Slow Motion:
-Here is a slower breakdown of what's happening in the animated example. We ended Step 1 with a group of pairs, and each pair's elements ordered.
-
-Step 2 is to the take larger element of each pair as our new input, and begin the alorithm again at Step 1. I'm paperclipping each larger number on top of its pair.
-
-![Taking the Larger Numbers Only](images/step_2_take_larger.gif)
-
-Back to Step 1. Out of $n$ elements, create $n/2$ pairs. If one element is leftover, save it to the side.
-
-![Make pairs again](images/step_2_make_pairs.jpg)
-
-Again, sort each pair internally. *Is pair[0] > pair[1]?* We add these comparisons to our running total of comparisons performed.
-
-In the illustrated example, it just so happened that {8, 11} and {5, 7} were already ordered, so no swapping was required.
-
-Now we arrive at Step 2 again. Again we take the larger numbers, make pairs, order pairs, and repeat...
+When the recursion eventually unwinds, the pairs that we've been creating and sorting will still be associated. For this reason, it's essential to keep track of each element's pair. In my illustration, I'm using paperclips to keep track of pairs. In my code, I'm using pointers.
 
 
 
 
+## Step 3 (Jacobsthal insertion)
 
-## 3) Split elements into 2 chains. Perform insertion according to sequence formula.
+![Step 3](images/knuth_step_3_cutout.jpg)
 
-> iii) Name the elements $a_1, a_2, \ldots, a_{\lfloor n/2 \rfloor}, b_1, b_2, \ldots, b_{\lceil n/2 \rceil}$ as in (7), where $a_1 \le a_2 \le \cdots \le a_{\lfloor n/2 \rfloor}$ and $b_i \le a_i$ for $1 \le i \le \lfloor n/2 \rfloor$; call $b_1$ and the $a$'s the "main chain." Insert the remaining $b$'s into the main chain, using binary insertion, in the following order, leaving out all $b_j$ for $j > \lceil n/2 \rceil$:
->
->$`\quad b_3, b_2;\; b_5, b_4;\; b_{11}, b_{10}, \ldots, b_6;\; \ldots;\; b_{t_k}, b_{t_k - 1}, \ldots, b_{t_{k-1}+1};\; \ldots \qquad`$
+The description of Step 3 is quite dense, so let's break it into smaller pieces.
 
-This step is very dense, so let's comb through it line by line.
+Reminder: the first time we enter Step 3, we will have just hit our base case, in which there's nothing left to sort by pairing-and-ordering. When we first unwind, we'll only be dealing with a single pair.
 
-My explanations will draw from additional text on the same page, as well as the diagram on page 184.
+However, it will be much easier to see what's going on in Step 3 with a larger group of elements in front of us. In the illustration below, I'll allow the algorithm to unwind twice through Step 3, before we stop to examine what Step 3 is doing, in its third and final round.
 
-<BR>
+Illustration here
 
-> Name the elements $a_1, a_2, \ldots, a_{\lfloor n/2 \rfloor}, b_1, b_2, \ldots, b_{\lceil n/2 \rceil}$ as in (7), where $a_1 \le a_2 \le \cdots \le a_{\lfloor n/2 \rfloor}$ and $b_i \le a_i$ for $1 \le i \le \lfloor n/2 \rfloor$;
+> iii) Name the elements $a_1, a_2, \ldots, a_{\lfloor n/2 \rfloor}, b_1, b_2, \ldots, b_{\lceil n/2 \rceil}$ as in (7), where $a_1 \le a_2 \le \cdots \le a_{\lfloor n/2 \rfloor}$ and $b_i \le a_i$ for $1 \le i \le \lfloor n/2 \rfloor$;
 
-- Break the elements into 2 groups, keeping them in order.
-- Group "a" ($a_1, a_2$, ...), includes up to n/2 elements. (If n is odd, round down)
-- Group "b" ($b_1, b_2$, ...) includes up to n/2 elements. (If n is odd, round up)
+The diagram (7) is on page 184:
 
-	This lower bracket notation ... ${\lfloor n/2 \rfloor}$ ... means floor, aka "n/2 rounded down."
-	
-	This upper bracket notation ... ${\lceil n/2 \rceil}$ ... means ceiling, aka "n/2" rounded up."
+![Diagram 7](images/knuth_diagram_7.png)
 
-- As the elements were already ordered, the first element of "b" should be less than the first element of "a."
+Given $n$ elements, up to ${n/2}$ of them are the ${ a }$'s, and these ${a}$'s are already ordered.
 
-<BR>
+Conveniently, this is exactly what the previous steps (including two rounds through Step 3) have given us. Of 11 total elements, here we have 5 pairs, plus one leftover. The larger element of each pair is placed on top, and these elements are already in ascending order. These are the ${a}$'s.
 
-> Call $b_1$ and the $a$'s the "main chain." 
+![Step 3 a's](images/step_3_a_only.jpg)
 
-- Remove the first element of "b" and add it as the new first element of "a." This group ( $b_1$ and all the $a$`s) will from now on be referred to as the "main chain."
+The remaining elements (the other half of each pair, plus a possible leftover) are the $b$'s. These elements aren't ordered among themselves, but we do know that each ${b}$ is smaller than its corresponding ${a}$.
 
-> Insert the remaining $b$'s into the main chain, using binary insertion, in the following order, leaving out all $b_j$ for $j > \lceil n/2 \rceil$:
->
->$`\quad b_3, b_2;\; b_5, b_4;\; b_{11}, b_{10}, \ldots, b_6;\; \ldots;\; b_{t_k}, b_{t_k - 1}, \ldots, b_{t_{k-1}+1};\; \ldots \qquad`$
-
-Now we will insert $b$'s into the main chain according to a particular formula that uses a special sequence of numbers. The these tiny subscripted values are getting hard to read... and there's further explanation about them in the text, so let's zoom out here.
-
-![Jacobsthal_explanation](/images/knuth_text_jacobsthal_explanation.png)
-
-- Determine the next element of $b$ to be inserted into the main chain.
-- The next element is determined according to this sequence, which will not mean anything to you at first glance:
-
-![a close-up of this last line](images/knuth_text_jacobsthal.png)
-
-What is $t$ here, and what is $k$? In the next paragraph, Knuth defines $t$ as the Jacobsthal Numbers (1, 3, 5, 11...), and $k$ is the index of $t$. (Note that in this math world, the very first index is 1, not 0).
-
-The first number of the Jacobsthal Numbers is $1$.
-Therefore: $t_1 = 1$, $b_{t_1} = b_1$, and $b_1 = $ the first element of b. We've already inserted $b_1$ when we created the main chain. After $1$, the next number in the Jacobsthal sequence is $3$. So in this case...
-- $t_2 = 1$
-- $t_{k-1}$ = $t_
+![Step 3 a's](images/step_3_a_b.jpg)
 
 
-## What's Involved in Merge-Insertion (a preview)
 
-From the name alone, you might imagine a simple combo of merge-sort and insertion-sort. Merge- and insertion-sort are indeed both involved, but the algorithm also requires pairing elements, as well as inserting elements into a chain in a particular order. The insertion is done based on a formula that uses a sequence of numbers, called the Jacobsthal sequence. More on this later.
-
-The trickiest part is... that all steps of the alogrithm are part of a single recursion. Many summaries of merge-insertion tend to skip or gloss over this recursion, and many students make the mistake of believing that only part of the alogrithm is recursive. I made this mistake too, at first.
-
-To test whether you've implemented the right algorithm, you should count the number of comparisons that your program performs to sort *n* numbers. If done correctly, this number will match the table of maximum comparisons shown on page 186 of *The Art of Computer Programming, Vol. 3*.
-
-## Brushing up on Merge Sort & Insertion Sort
-
-Before digging into the Ford-Johnson, it's nice to brush up on merge sort and insertion sort. For one thing, you'll you have to implement  both as part of FJ. For another thing, it's going to be super helpful for your understanding of FJ to remember the particular advantages of merge sort vs. insertion sort, and in what cases each of the two is efficient.
-
-- Merge Sort // TODO link to merge sort summary
-- Insertion Sort // TODO link to insertion sort summary
-
-## Jacobsthal Numbers
-
-There's also one more thing you might like to know about before reading the Knuth text, and that's the Jacobsthal Numbers. The Jacobsthal numbers are an sequence of integers related to Fibonacci numbers, which will be used in our formula for insertion.
-
-The sequence begins with 0 and 1. Each following number in the sequence is equal to... the previous number + two times the number before the previous number.
+At this stage, the already-known relationships between elements will start saving us comparisons. Next:
 
 
-> 0, 1, 2, 3, 5, 11, 21, 43, 85, 171, ...
+>call $b_1$ and the $a$'s the "main chain."
 
-The definition of the sequence may sound convoluted, but you'll find that you can write a function to generate these numbers very easily.
+Given that: the ${a}$'s are sorted, ${a_1}$ is the smallest ${a}$, and ${b_1 < a_1}$, we can go ahead and place ${b_1}$ before ${a_1}$. This is an action that requires no comparisons.
 
-You might find it helpful to do this right now, because in the text, Knuth is going to make reference to the Jabobsthal Numbers out of nowhere (without naming them, just describing how they're generated), and as soon as they've been introduced, you're going to have to create an additional sequence with them. Better to have some familiarity first.
+Remove the first element of ${b}$ and add it as the new first element of ${a}$. This group ( $b_1$ and all the $a$`s) will from now on be referred to as the "main chain."
 
-As for why these numbers are relevant to the algorithm... By the time you're finished, this will hopefully make a lot more sense, but will likely still remain a least somewhat magical. For now, you may just enjoy noticing that each number in the sequence is about double the previous number, give or take 1.
+![The Main Chain](images/step_3_main_chain.jpg)
 
-# Reading Knuth
-
-> In general, merge insertion proceeds as follows for $n$ elements:
->
-> i) Make pairwise comparisons of $\lfloor n/2 \rfloor$ disjoint pairs of elements. (If $n$ is odd, leave one element out.)
->
-> ii) Sort the $\lfloor n/2 \rfloor$ larger numbers, found in step (i), by merge insertion.
->
-> iii) Name the elements $a_1, a_2, \ldots, a_{\lfloor n/2 \rfloor}, b_1, b_2, \ldots, b_{\lceil n/2 \rceil}$ as in (7), where $a_1 \le a_2 \le \cdots \le a_{\lfloor n/2 \rfloor}$ and $b_i \le a_i$ for $1 \le i \le \lfloor n/2 \rfloor$; call $b_1$ and the $a$'s the "main chain." Insert the remaining $b$'s into the main chain, using binary insertion, in the following order, leaving out all $b_j$ for $j > \lceil n/2 \rceil$:
->
->$$b_3, b_2;\; b_5, b_4;\; b_{11}, b_{10}, \ldots, b_6;\; \ldots;\; b_{t_k}, b_{t_k - 1}, \ldots, b_{t_{k-1}+1};\; \ldots \qquad
+>Insert the remaining $b$'s into the main chain, using binary insertion, in the following order, leaving out all $b_j$ for $j > \lceil n/2 \rceil$:
