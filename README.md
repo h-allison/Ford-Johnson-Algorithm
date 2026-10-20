@@ -8,7 +8,7 @@ The algorithm is designed to minimize the number of *comparisons* required to so
 
 # The Steps of Merge Insertion for $n$ Elements
 
-## Step 1 (merge)
+## Step 1 (pairwise comparisons)
 
 ![Step 1](images/knuth_step_1_cutout.jpg)
 
@@ -28,8 +28,6 @@ This step is easy. First, out of $n$ elements, we create *$`{\lfloor n/2 \rfloor
 
 ![Step 1, Part 2](/images/step_1_part_2.gif)
 
-// TODO talk about how Step 1 resembles regular merge sort.
-
 ## Step 2 (recurse)
 
 ![Step 2](images/knuth_step_2_cutout.jpg)
@@ -48,8 +46,6 @@ The program will "wind up" by cycling through Steps 1-2 repeatedly (as seen in t
 When the recursion eventually unwinds, the pairs that we've been creating and sorting will still be associated. For this reason, it's essential to keep track of each element's pair. In my illustration, I'm using paperclips to keep track of pairs. In my code, I'm using pointers.
 
 
-
-
 ## Step 3 (Jacobsthal insertion)
 
 ![Step 3](images/knuth_step_3_cutout.jpg)
@@ -62,17 +58,20 @@ Reminder: the first time we enter Step 3, we will have just hit our base case, i
 
 However, it will be much easier to see what's going on in Step 3 with a larger group of elements in front of us. In the illustration below, I'll allow the algorithm to unwind twice through Step 3, before we stop to examine what Step 3 is doing, in its third and final round.
 
-Illustration here
+![Two rounds of Step 3 later...](/images/step_3_first_rounds.gif)
 
 > iii) Name the elements $a_1, a_2, \ldots, a_{\lfloor n/2 \rfloor}, b_1, b_2, \ldots, b_{\lceil n/2 \rceil}$ as in (7), where $a_1 \le a_2 \le \cdots \le a_{\lfloor n/2 \rfloor}$ and $b_i \le a_i$ for $1 \le i \le \lfloor n/2 \rfloor$;
+
+In other words, given $n$ elements, up to ${n/2}$ of them are the ${ a }$'s, and these ${a}$'s are already ordered.
 
 The diagram (7) is on page 184:
 
 ![Diagram 7](images/knuth_diagram_7.png)
 
-Given $n$ elements, up to ${n/2}$ of them are the ${ a }$'s, and these ${a}$'s are already ordered.
 
-Conveniently, this is exactly what the previous steps (including two rounds through Step 3) have given us. Of 11 total elements, here we have 5 pairs, plus one leftover. The larger element of each pair is placed on top, and these elements are already in ascending order. These elements are the ${a}$'s.
+This is the state of the elements each time we enter Step 3.
+
+In the illustration below, there are 11 total elements, from which we've made 5 pairs. (There is one leftover). The largers elements of the pairs have already been ordered by previous steps. These elements are the ${a}$'s.
 
 ![Step 3 a's](images/step_3_a_only.jpg)
 
@@ -98,18 +97,20 @@ So, remove the first element of ${b}$ and add it as the new first element of ${a
 >Insert the remaining $b$'s into the main chain, using binary insertion, in the following order, leaving out all $b_j$ for $j > \lceil n/2 \rceil$:
 > $$b_3, b_2; \ b_5, b_4; \ b_{11}, b_{10}, \ldots, b_6; \ \ldots; \ b_{t_k}, b_{t_k-1}, \ldots, b_{t_{k-1}+1}; \ \ldots$$
 
-We will now insert the rest of the $b$'s into $a$. Since our goal is to minimize the number of comparisons in the worst case, and top array is sorted, [binary insertion](https://en.wikipedia.org/wiki/Binary_search) is the natural choice. However, the order in which we insert the $b$'s won't simply be from left to right, or from beginning to end of the $b$ array.
+We will now insert the rest of the $b$'s into the main chain. Since our goal is to minimize the number of comparisons in the worst case, and the top array is sorted, [binary insertion](https://en.wikipedia.org/wiki/Binary_search) is the natural choice. However, the order in which we insert the $b$'s won't simply be from left to right, or from beginning to end of the $b$ array.
 
-The order that Knuth is describing can't be read in a first glance. What is this new subscript variable $t$... and sub-subscript variable $k$? Actually, we've given more context on the same page:
+The order that Knuth is describing can't be read in a first glance. What is this new subscript variable $t$... and sub-subscript variable $k$? Actually, we're given more context on the same page:
 
 ![explanation of t and k](images/knuth_text_step_3_extra.png)
 
-$t$ is described as the sequence $(1, 3, 4, 11...)$, which as everyone knows (joke), is the [Jacobsthal Sequence](https://en.wikipedia.org/wiki/Jacobsthal_number). 
+$t$ is described as the sequence $(1, 3, 4, 11...)$, which as everyone knows (joke) is the [Jacobsthal Sequence](https://en.wikipedia.org/wiki/Jacobsthal_number). We can define this sequence as:
 
-The Jacobsthal sequence begins with 0 and 1. Each following number in the sequence is equal to... the previous number + two times the number before the previous number.
+$`f(0) = 0, f(1) = 1, f(n) = f(n - 1) + 2 * f(n - 2)`$
+
+In other words, the first numbers in the sequence are 0, 1. After that, each following number = the previous number + two times the number before the previous number.
 
 
-> 0, 1, 2, 3, 5, 11, 21, 43, 85, 171, ...
+> 0, 1, 1, 3, 5, 11, 21, 43, 85, 171, ...
 
 Do yourself a favor and write a function that generates this Jacobsthal sequence ($t$), up to a given max value. Call the index of this sequence $k$. Accept that in this kooky math world, the first index is 1 instead of 0. 
 
@@ -123,8 +124,26 @@ From here, the instructions for insertion order become a bit easier to read. The
 
 The sequence that we've generated is: 1; 3, 2; 5, 4; 11, 10, 9, 8, 7, 6; 21, 20... 
 
-We will now insert the $b's$ into the main chain based on this sequence. The magic of this order is that it limits the number of comparisons required to no more than $k$, which is the index (starting at 1) of the Jacobsthal number used.
+We will now insert the $b's$ into the main chain based on this sequence. The magic of this order is that it limits the number of comparisons required to no more than $k$.
 
 ![Main chain and b's](images/step_3_main_chain.jpg)
 
-In the example above, our next step is to insert $b_3$. Since we already know that $b_3$ is smaller than $a_3$, we can begin our binary search at the center of the main chain up until this point. We can see that we'll need a maximum of 2 comparisons to place $b_3$. Depending where $b_3$ ends up, the search area for inserting $b_2$ might or might not increase by one, but the search area divded by two, which equals maximum comparisons, remains the same. Had we inserted $b_2$ before $b_3$, the maximum comparisons needed to place $b_3$ would have automatically increased.
+In the example above, our next step is to insert $b_3$. Since we already know that $b_3$ is smaller than $a_3$, we can begin our binary search at the center of the section $[b_1, a_1, a_2]$. We can see that we'll need 2 comparisons to place $b_3$.
+
+Depending where $b_3$ ends up, the search area for inserting $b_2$ might or might not increase by one, but the maximum number of comparisons remains the same. Had we inserted $b_2$ before $b_3$, the maximum comparisons needed to place $b_3$ would have increased.
+
+![Step 3 final round](images/step_3_final_round.gif)
+
+## Checking Maximum Comparisons
+
+Because the whole point of the algorithm is to minimize the worst-case number of comparisons, $`F(n)`$, you should record the number of comparisons performed by your program on each run. If you've implemented the algorithm correctly, your number of comparisons will fall within the table of $`F(n)`$ on page 186 in the Knuth text.
+
+In lucky cases, your comparison count will sometimes be a tiny bit lower, but never higher. Notice how, overall, the count remains extremely stable. This is by design!
+
+![comparisons chart](/images/knuth_comparisons_chart.png)
+
+
+---
+### Visualization of the Full Alogrithm
+
+![full algo](images/full_algo.gif)
